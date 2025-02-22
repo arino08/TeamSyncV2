@@ -1,0 +1,6 @@
+import Keyv from 'keyv';
+import { DATABASE_URI } from './config.js';
+
+// ...existing code...
+const keyv = new Keyv(DATABASE_URI); // Uses MySQL connection
+// ...existing code...
