@@ -57,7 +57,7 @@ export default function Dashboard() {
                 Sign out
               </button>
             </div>
-          </div>
+          </div> 
         </div>
       </nav>
       <div className="py-10">

@@ -59,14 +59,14 @@ const tables = [
   )`,
 
   // Subtasks table
-  `CREATE TABLE IF NOT EXISTS subtasks (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    task_id CHAR(36) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    status ENUM('todo', 'completed') DEFAULT 'todo',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (task_id) REFERENCES workspace_tasks(id) ON DELETE CASCADE
-  )`,
+`CREATE TABLE IF NOT EXISTS subtasks (
+  id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  task_id CHAR(36) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  status ENUM('todo', 'completed') DEFAULT 'todo',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (task_id) REFERENCES workspace_tasks(id) ON DELETE CASCADE
+)`,
 
   // Workspace members table
   `CREATE TABLE IF NOT EXISTS workspace_members (
@@ -84,8 +84,6 @@ export async function initializeDatabase() {
   let connection;
   try {
     connection = await mysql.createConnection(DATABASE_URI);
-    console.log('Dropping existing subtasks table...');
-    await connection.query('DROP TABLE IF EXISTS subtasks');
 
     console.log('Creating tables...');
 

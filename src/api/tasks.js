@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get tasks assigned to user
+// Get tasks assigned to user - update this route
 router.get('/assigned', async (req, res) => {
   const userId = req.user.id;
   const connection = await pool.getConnection();
@@ -30,7 +30,7 @@ router.get('/assigned', async (req, res) => {
   try {
     console.log('Fetching tasks for user:', userId);
 
-    // First get tasks without subtasks
+    // Get tasks without JSON aggregation
     const [tasks] = await connection.execute(
       `SELECT
         wt.*,
@@ -45,8 +45,9 @@ router.get('/assigned', async (req, res) => {
       [userId]
     );
 
-    // Then get subtasks for each task
-    const tasksWithSubtasks = await Promise.all(tasks.map(async (task) => {
+    // Get all subtasks for these tasks
+    const processedTasks = await Promise.all(tasks.map(async (task) => {
+      // Get subtasks for this task
       const [subtasks] = await connection.execute(
         `SELECT id, title, status
          FROM subtasks
@@ -54,15 +55,35 @@ router.get('/assigned', async (req, res) => {
         [task.id]
       );
 
+      // Count completed subtasks
+      const completedCount = subtasks.filter(s => s.status === 'completed').length;
+
+      // Calculate task status based on subtasks
+      let status = task.status;
+      if (subtasks.length > 0) {
+        if (completedCount === subtasks.length) {
+          status = 'completed';
+        } else if (completedCount > 0) {
+          status = 'in-progress';
+        } else {
+          status = 'pending';
+        }
+      }
+
       return {
         ...task,
+        status,
         subtasks: subtasks || []
       };
     }));
 
-    console.log('Processed tasks:', tasksWithSubtasks);
+    console.log('Processed tasks:', processedTasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      subtasksCount: t.subtasks.length
+    })));
 
-    res.json({ tasks: tasksWithSubtasks });
+    res.json({ tasks: processedTasks });
   } catch (error) {
     console.error('Failed to fetch assigned tasks:', error);
     res.status(500).json({
@@ -75,7 +96,7 @@ router.get('/assigned', async (req, res) => {
   }
 });
 
-// Add subtask
+// Fix the add subtask endpoint
 router.post('/:taskId/subtasks', async (req, res) => {
   const { taskId } = req.params;
   const { title } = req.body;
@@ -96,24 +117,60 @@ router.post('/:taskId/subtasks', async (req, res) => {
     }
 
     const subtaskId = uuidv4();
-    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    console.log('Creating subtask:', { subtaskId, taskId, title });
-
+    // Create subtask
     await connection.execute(
-      'INSERT INTO subtasks (id, task_id, title, created_at) VALUES (?, ?, ?, ?)',
-      [subtaskId, taskId, title, now]
+      'INSERT INTO subtasks (id, task_id, title, status) VALUES (?, ?, ?, ?)',
+      [subtaskId, taskId, title, 'todo']
     );
 
+    // Get the created subtask
     const [subtasks] = await connection.execute(
       'SELECT id, title, status FROM subtasks WHERE id = ?',
       [subtaskId]
     );
 
-    await connection.commit();
-    console.log('Created subtask:', subtasks[0]);
+    // Update task status to in-progress if it was pending
+    await connection.execute(
+      `UPDATE workspace_tasks
+       SET status = CASE
+         WHEN status = 'pending' THEN 'in-progress'
+         ELSE status
+       END
+       WHERE id = ?`,
+      [taskId]
+    );
 
-    res.status(201).json({ subtask: subtasks[0] });
+    // Get updated task data
+    const [updatedTasks] = await connection.execute(
+      `SELECT
+        wt.*,
+        w.name as workspace_name,
+        p.name as assignedToName
+       FROM workspace_tasks wt
+       JOIN workspaces w ON wt.workspace_id = w.id
+       LEFT JOIN profiles p ON wt.assigned_to = p.id
+       WHERE wt.id = ?`,
+      [taskId]
+    );
+
+    // Get all subtasks for the task
+    const [allSubtasks] = await connection.execute(
+      'SELECT id, title, status FROM subtasks WHERE task_id = ?',
+      [taskId]
+    );
+
+    await connection.commit();
+
+    // Return task with subtasks as plain objects
+    res.status(201).json({
+      task: {
+        ...updatedTasks[0],
+        subtasks: allSubtasks
+      },
+      subtask: subtasks[0]
+    });
+
   } catch (error) {
     await connection.rollback();
     console.error('Failed to create subtask:', error);
