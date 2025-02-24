@@ -7,8 +7,17 @@ const router = express.Router();
 // Get all workspaces
 router.get('/', async (req, res) => {
   try {
+    const userId = req.user.id;
     const [workspaces] = await pool.execute(
-      'SELECT w.*, COUNT(wm.user_id) as member_count FROM workspaces w LEFT JOIN workspace_members wm ON w.id = wm.workspace_id GROUP BY w.id'
+      `SELECT
+        w.*,
+        COUNT(DISTINCT wm2.user_id) as member_count
+       FROM workspaces w
+       JOIN workspace_members wm ON w.id = wm.workspace_id
+       LEFT JOIN workspace_members wm2 ON w.id = wm2.workspace_id
+       WHERE wm.user_id = ?
+       GROUP BY w.id`,
+      [userId]
     );
     res.json({ workspaces });
   } catch (error) {

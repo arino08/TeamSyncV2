@@ -60,6 +60,9 @@ export const useWorkspaceStore = create<WorkspaceStore>((set) => ({
           Authorization: `Bearer ${token}`
         }
       });
+
+      console.log('Fetched workspaces:', response.data);
+
       set({
         workspaces: response.data.workspaces || [],
         loading: false,
