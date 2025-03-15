@@ -25,9 +25,13 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-bold text-blue-600">TeamSync</span>
-              </div>
+                <div className="flex-shrink-0 flex items-center -ml-4 sm:-ml-6 lg:-ml-8">
+                <img
+                  src="/logo.png"
+                  alt="TeamSync Logo"
+                  className="h-28 w-28"
+                />
+                </div>
 
               {/* Desktop Navigation */}
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

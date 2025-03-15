@@ -595,7 +595,7 @@ const AddTaskModal = ({
         onClose={() => setShowAddTask(false)}
         title="Create New Task"
         maxWidth="md"
-      >
+        >
         <AddTaskModalContent />
       </Modal>
         <AddMemberModal
