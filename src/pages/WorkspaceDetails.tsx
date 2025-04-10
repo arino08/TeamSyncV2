@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -187,6 +188,7 @@ export default function WorkspaceDetails() {
       setShowAddTask(false);
       setNewTask({ title: '', description: '', assignedTo: '' });
       await fetchTasks(); // Refresh tasks after adding
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('Failed to create task');
     }
@@ -636,6 +638,7 @@ const AddTaskModal = ({
             setTasks([...tasks, data.task]);
             setShowAddTask(false);
          } catch (err) {
+          setError('Failed to create task');
         }
       }}
       members={members}

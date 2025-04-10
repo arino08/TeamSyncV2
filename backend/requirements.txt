@@ -1,0 +1,10 @@
+fastapi==0.103.1
+uvicorn==0.23.2
+pydantic==2.3.0
+python-dotenv==1.0.0
+sqlalchemy==2.0.20
+pymysql==1.1.0
+cryptography==41.0.3  # For secure MySQL connections
+passlib==1.7.4        # For password hashing
+bcrypt==4.0.1         # For bcrypt algorithm
+uuid==1.30            # For UUID generation

@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { motion } from 'framer-motion';
 import { CheckCircle, Clock, AlertCircle, Activity, Calendar, Users } from 'lucide-react';
+import axios from 'axios';
 
-// Mock data - replace with actual API calls
-const mockStatistics = {
-  totalTasks: 28,
-  completedTasks: 16,
-  pendingTasks: 8,
-  overdueTask: 4,
-  workspaces: 3,
-  teammates: 12
-};
+// Define statistics interface to match API response
+interface Statistics {
+  total_tasks: number;
+  completed_tasks: number;
+  pending_tasks: number;
+  overdue_tasks: number;
+  workspace_count: number;
+  team_member_count: number;
+}
 
 const mockActivities = [
   { id: 1, type: 'task_completed', task: 'Update website content', workspace: 'Marketing', time: '2 hours ago', user: 'You' },
@@ -24,13 +25,30 @@ const mockActivities = [
 export default function Overview() {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [statistics, setStatistics] = useState<Statistics>({
+    total_tasks: 0,
+    completed_tasks: 0,
+    pending_tasks: 0,
+    overdue_tasks: 0,
+    workspace_count: 0,
+    team_member_count: 0
+  });
 
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    const fetchStatistics = async () => {
+      setIsLoading(true);
+      try {
+        // Update the URL to point to the backend FastAPI server
+        const response = await axios.get('http://localhost:8000/api/statistics');
+        setStatistics(response.data);
+      } catch (error) {
+        console.error('Failed to fetch statistics:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStatistics();
   }, []);
 
   const containerVariants = {
@@ -92,15 +110,15 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Completed Tasks</p>
-                <p className="text-3xl font-bold text-gray-900">{mockStatistics.completedTasks}</p>
+                <p className="text-3xl font-bold text-gray-900">{statistics.completed_tasks}</p>
               </div>
               <CheckCircle className="h-10 w-10 text-green-500" />
             </div>
             <div className="mt-4">
               <div className="bg-gray-200 h-2 rounded-full">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(mockStatistics.completedTasks/mockStatistics.totalTasks)*100}%` }}></div>
+                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(statistics.completed_tasks/statistics.total_tasks)*100}%` }}></div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{Math.round((mockStatistics.completedTasks/mockStatistics.totalTasks)*100)}% of total tasks</p>
+              <p className="text-xs text-gray-500 mt-1">{Math.round((statistics.completed_tasks/statistics.total_tasks)*100)}% of total tasks</p>
             </div>
           </motion.div>
 
@@ -108,15 +126,15 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Pending Tasks</p>
-                <p className="text-3xl font-bold text-gray-900">{mockStatistics.pendingTasks}</p>
+                <p className="text-3xl font-bold text-gray-900">{statistics.pending_tasks}</p>
               </div>
               <Clock className="h-10 w-10 text-blue-500" />
             </div>
             <div className="mt-4">
               <div className="bg-gray-200 h-2 rounded-full">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(mockStatistics.pendingTasks/mockStatistics.totalTasks)*100}%` }}></div>
+                <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(statistics.pending_tasks/statistics.total_tasks)*100}%` }}></div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{Math.round((mockStatistics.pendingTasks/mockStatistics.totalTasks)*100)}% of total tasks</p>
+              <p className="text-xs text-gray-500 mt-1">{Math.round((statistics.pending_tasks/statistics.total_tasks)*100)}% of total tasks</p>
             </div>
           </motion.div>
 
@@ -124,15 +142,15 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Overdue Tasks</p>
-                <p className="text-3xl font-bold text-gray-900">{mockStatistics.overdueTask}</p>
+                <p className="text-3xl font-bold text-gray-900">{statistics.overdue_tasks}</p>
               </div>
               <AlertCircle className="h-10 w-10 text-red-500" />
             </div>
             <div className="mt-4">
               <div className="bg-gray-200 h-2 rounded-full">
-                <div className="bg-red-500 h-2 rounded-full" style={{ width: `${(mockStatistics.overdueTask/mockStatistics.totalTasks)*100}%` }}></div>
+                <div className="bg-red-500 h-2 rounded-full" style={{ width: `${(statistics.overdue_tasks/statistics.total_tasks)*100}%` }}></div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{Math.round((mockStatistics.overdueTask/mockStatistics.totalTasks)*100)}% of total tasks</p>
+              <p className="text-xs text-gray-500 mt-1">{Math.round((statistics.overdue_tasks/statistics.total_tasks)*100)}% of total tasks</p>
             </div>
           </motion.div>
 
@@ -140,12 +158,12 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Tasks</p>
-                <p className="text-3xl font-bold text-gray-900">{mockStatistics.totalTasks}</p>
+                <p className="text-3xl font-bold text-gray-900">{statistics.total_tasks}</p>
               </div>
               <Activity className="h-10 w-10 text-purple-500" />
             </div>
             <div className="mt-4">
-              <p className="text-xs text-gray-500">Across {mockStatistics.workspaces} workspaces</p>
+              <p className="text-xs text-gray-500">Across {statistics.workspace_count} workspaces</p>
             </div>
           </motion.div>
 
@@ -153,7 +171,7 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Workspaces</p>
-                <p className="text-3xl font-bold text-gray-900">{mockStatistics.workspaces}</p>
+                <p className="text-3xl font-bold text-gray-900">{statistics.workspace_count}</p>
               </div>
               <Calendar className="h-10 w-10 text-yellow-500" />
             </div>
@@ -166,7 +184,7 @@ export default function Overview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Team Members</p>
-                <p className="text-3xl font-bold text-gray-900">{mockStatistics.teammates}</p>
+                <p className="text-3xl font-bold text-gray-900">{statistics.team_member_count}</p>
               </div>
               <Users className="h-10 w-10 text-indigo-500" />
             </div>
